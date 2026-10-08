@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using DotNetCoreSqlDb.Data;
+using StackExchange.Redis;
 
 var builder = WebApplication.CreateBuilder(args);
 var localDatabase = builder.Environment.IsDevelopment();
@@ -16,7 +17,24 @@ else
     builder.Services.AddDbContext<MyDatabaseContext>(options => options.UseSqlServer(sqlConnection));
 }
 var redisConnection = builder.Configuration["AZURE_REDIS_CONNECTIONSTRING"];
-if (!string.IsNullOrWhiteSpace(redisConnection))
+var redisHost = builder.Configuration["AZURE_REDIS_HOST"];
+if (!string.IsNullOrWhiteSpace(redisHost))
+{
+    builder.Services.AddStackExchangeRedisCache(options =>
+    {
+        options.InstanceName = "Lab2:";
+        options.ConnectionMultiplexerFactory = async () =>
+        {
+            var configuration = ConfigurationOptions.Parse($"{redisHost}:10000");
+            configuration.Ssl = true;
+            configuration.AbortOnConnectFail = false;
+            configuration.Protocol = RedisProtocol.Resp3;
+            await configuration.ConfigureForAzureWithSystemAssignedManagedIdentityAsync();
+            return await ConnectionMultiplexer.ConnectAsync(configuration);
+        };
+    });
+}
+else if (!string.IsNullOrWhiteSpace(redisConnection))
 {
     builder.Services.AddStackExchangeRedisCache(options =>
     {
@@ -30,7 +48,7 @@ else if (localDatabase)
 }
 else
 {
-    throw new InvalidOperationException("Azure Redis connection string is required.");
+    throw new InvalidOperationException("Azure Redis host or connection string is required.");
 }
 builder.Services.AddControllersWithViews();
 builder.Logging.AddAzureWebAppDiagnostics();
