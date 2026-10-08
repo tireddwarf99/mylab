@@ -1,0 +1,21 @@
+services:
+  - type: web
+    name: cloud-lab1-baseline
+    runtime: node
+    plan: free
+    buildCommand: npm install --omit=dev
+    startCommand: npm start
+    healthCheckPath: /health
+    envVars:
+      - key: APP_VARIANT
+        value: baseline
+  - type: web
+    name: cloud-lab1-modified
+    runtime: node
+    plan: free
+    buildCommand: npm install --omit=dev
+    startCommand: npm start
+    healthCheckPath: /health
+    envVars:
+      - key: APP_VARIANT
+        value: modified
