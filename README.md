@@ -1,6 +1,6 @@
 # Лабораторна робота № 2 — Хмарні технології
 
-ASP.NET Core MVC (.NET 8), Entity Framework Core 8, Azure SQL Database та Redis.
+ASP.NET Core MVC (.NET 8), Entity Framework Core 8, Azure SQL Database та Azure Managed Redis.
 Проєкт адаптовано з Azure-Samples/msdocs-app-service-sqldb-dotnetcore.
 Ліцензія оригіналу збережена в LICENSE.md.
 
@@ -13,31 +13,21 @@ $env:ASPNETCORE_ENVIRONMENT='Development'
 dotnet run --urls http://localhost:5082
 ```
 
-Локально використовується SQLite й кеш у пам’яті. Production використовує Azure SQL та Redis.
+Локально використовується SQLite й кеш у пам’яті. Production використовує Azure SQL та Azure Managed Redis.
 
 ## Параметри Azure App Service
 
-Рядки підключення зберігаються в Azure, а не в GitHub:
-
-- AZURE_SQL_CONNECTIONSTRING — Azure SQL (підтримується також Connection string з цією назвою).
-- AZURE_REDIS_CONNECTIONSTRING — Redis.
+- AZURE_SQL_CONNECTIONSTRING — рядок підключення Azure SQL у Connection strings.
+- AZURE_REDIS_HOST — адреса Azure Managed Redis; порт 10000, TLS, авторизація через системну керовану ідентичність вебдодатка.
 - ASPNETCORE_ENVIRONMENT=Production.
 
-## Міграція
+Паролі й токени в репозиторії не зберігаються. Публічний доступ до Redis вимкнений; мережеве підключення проходить через Private Endpoint.
 
-GitHub Actions формує самодостатній Linux-пакет migrationsbundle.
-У SSH App Service із каталогу /home/site/wwwroot:
+## Міграція та розгортання
 
-```bash
-chmod +x migrationsbundle
-./migrationsbundle
-```
-
-## GitHub Actions
-
-.github/workflows/azure-lab2.yml збирає .NET 8, формує міграцію та публікує через OIDC.
-Потрібні variable AZURE_WEBAPP_NAME та secrets AZURE_CLIENT_ID, AZURE_TENANT_ID, AZURE_SUBSCRIPTION_ID.
-Workflow запускається вручну. Deployment Center може створити власний workflow.
+GitHub Actions збирає .NET 8, формує самодостатній Linux-пакет migrationsbundle й публікує застосунок в Azure через OIDC.
+Workflow запускається після змін у гілці lab2-azure. Ідентифікатори дозволеної Azure-ідентичності задано в workflow; секрети для входу не потрібні.
+Команда запуску App Service застосовує migrationsbundle перед запуском DotNetCoreSqlDb.dll.
 
 ## Індивідуальне завдання
 
